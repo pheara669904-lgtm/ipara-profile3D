@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="km">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Ipara | 3D Tree</title>
+    <!-- Font Awesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', 'Inter', sans-serif;
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Three.js canvas 3D background */
+        #canvas-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+        }
+
+        /* Main container */
+        .linktree-container {
+            max-width: 550px;
+            width: 100%;
+            margin: 0 auto;
+            position: relative;
+            z-index: 10;
+            padding: 2rem 1.5rem;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        /* 3D Card */
+        .profile-card {
+            background: rgba(255, 255, 255, 0.88);
+            backdrop-filter: blur(12px);
+            border-radius: 2rem;
+            padding: 2rem 1.8rem;
+            text-align: center;
+            box-shadow: 0 25px 45px -12px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transform-style: preserve-3d;
+            transform: perspective(1000px) rotateX(0deg) rotateY(0deg);
+            animation: cardFloat 3s ease-in-out infinite;
+        }
+
+        @keyframes cardFloat {
+            0%, 100% {
+                transform: perspective(1000px) rotateX(0deg) rotateY(0deg) translateY(0px);
+            }
+            50% {
+                transform: perspective(1000px) rotateX(2deg) rotateY(2deg) translateY(-8px);
+            }
+        }
+
+        .profile-card:hover {
+            transform: perspective(1000px) rotateX(5deg) rotateY(5deg) translateY(-10px);
+            box-shadow: 0 35px 55px -15px rgba(0, 0, 0, 0.4);
+        }
+
+        /* 3D Avatar */
+        .avatar-wrapper {
+            position: relative;
+            display: inline-block;
+            margin-bottom: 1rem;
+            transform-style: preserve-3d;
+        }
+
+        .cat-ears {
+            position: absolute;
+            top: -18px;
+            left: 50%;
+            transform: translateX(-50%) translateZ(20px);
+            display: flex;
+            gap: 65px;
+            z-index: 2;
+        }
+
+        .ear {
+            width: 38px;
+            height: 38px;
+            background: linear-gradient(135deg, #ff9ecf, #ff6b9d);
+            clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+            animation: earWiggle 2s infinite ease-in-out;
+            transform-style: preserve-3d;
+        }
+
+        @keyframes earWiggle {
+            0%, 100% { transform: rotate(0deg) translateZ(5px); }
+            50% { transform: rotate(8deg) translateZ(10px); }
+        }
+
+        .avatar {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 4px solid white;
+            box-shadow: 0 12px 20px -8px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s;
+            transform-style: preserve-3d;
+            transform: translateZ(15px);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 50%;
+            transition: transform 0.3s;
+        }
+
+        .avatar:hover {
+            transform: translateZ(25px) scale(1.05);
+        }
+
+        .avatar:hover img {
+            transform: scale(1.05);
+        }
+
+        .name {
+            font-size: 2.2rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #ff6b9d, #c06cff, #ff9ecf);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.3rem;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            transform: translateZ(10px);
+            display: inline-block;
+        }
+
+        .cat-icon {
+            display: inline-block;
+            animation: catBounce 1s infinite;
+        }
+
+        @keyframes catBounce {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-5px) rotate(5deg); }
+        }
+
+        .bio {
+            color: #4a5568;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        .location {
+            font-size: 0.8rem;
+            color: #718096;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.3rem;
+        }
+
+        /* Stats */
+        .stats {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-bottom: 2rem;
+            padding: 0.8rem;
+            background: rgba(255, 158, 207, 0.2);
+            border-radius: 2rem;
+            transform: translateZ(5px);
+        }
+
+        .stat-item {
+            text-align: center;
+            transition: transform 0.3s;
+        }
+
+        .stat-item:hover {
+            transform: translateY(-5px) scale(1.05);
+        }
+
+        .stat-number {
+            font-size: 1.3rem;
+            font-weight: 800;
+            color: #ff6b9d;
+        }
+
+        .stat-label {
+            font-size: 0.7rem;
+            color: #4a5568;
+            text-transform: uppercase;
+        }
+
+        /* 3D Link Buttons */
+        .links {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .link-btn {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem 1.5rem;
+            background: white;
+            border-radius: 3rem;
+            text-decoration: none;
+            color: #1a202c;
+            font-weight: 600;
+            transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            border: 1px solid rgba(255, 158, 207, 0.4);
+            box-shadow: 0 5px 0 rgba(0, 0, 0, 0.1);
+            transform: translateY(0px);
+            animation: slideIn 0.5s ease-out backwards;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-40px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .link-btn:nth-child(1) { animation-delay: 0.05s; }
+        .link-btn:nth-child(2) { animation-delay: 0.1s; }
+        .link-btn:nth-child(3) { animation-delay: 0.15s; }
+        .link-btn:nth-child(4) { animation-delay: 0.2s; }
+        .link-btn:nth-child(5) { animation-delay: 0.25s; }
+
+        .link-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 0 rgba(0, 0, 0, 0.1);
+            border-color: #ff9ecf;
+        }
+
+        .link-btn:active {
+            transform: translateY(2px);
+            box-shadow: 0 3px 0 rgba(0, 0, 0, 0.1);
+        }
+
+        .link-left {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .link-left i {
+            font-size: 1.5rem;
+            width: 32px;
+            text-align: center;
+        }
+
+        .link-right i {
+            font-size: 0.9rem;
+            opacity: 0.5;
+            transition: all 0.3s;
+        }
+
+        .link-btn:hover .link-right i {
+            opacity: 1;
+            transform: translateX(5px);
+        }
+
+        /* Brand colors on hover */
+        .link-btn[data-brand="telegram"]:hover { background: #0088cc; color: white; }
+        .link-btn[data-brand="facebook"]:hover { background: #1877f2; color: white; }
+        .link-btn[data-brand="instagram"]:hover { background: linear-gradient(45deg, #f09433, #d62976, #962fbf); color: white; }
+        .link-btn[data-brand="tiktok"]:hover { background: #000000; color: #00f2ea; }
+        .link-btn[data-brand="github"]:hover { background: #333; color: white; }
+
+        /* Social Icons Row */
+        .social-icons {
+            display: flex;
+            justify-content: center;
+            gap: 1.2rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .social-icon {
+            width: 48px;
+            height: 48px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            color: #ff6b9d;
+            font-size: 1.3rem;
+            transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            box-shadow: 0 5px 0 rgba(0, 0, 0, 0.08);
+            transform: translateY(0px);
+        }
+
+        .social-icon:hover {
+            transform: translateY(-5px) scale(1.1);
+            box-shadow: 0 10px 0 rgba(0, 0, 0, 0.08);
+        }
+
+        .social-icon:nth-child(1):hover { background: #0088cc; color: white; }
+        .social-icon:nth-child(2):hover { background: #1877f2; color: white; }
+        .social-icon:nth-child(3):hover { background: linear-gradient(45deg, #f09433, #d62976, #962fbf); color: white; }
+        .social-icon:nth-child(4):hover { background: #000000; color: #00f2ea; }
+        .social-icon:nth-child(5):hover { background: #333; color: white; }
+
+        /* Cat Fact */
+        .cat-fact {
+            margin-top: 1rem;
+            padding: 0.8rem;
+            background: rgba(255, 158, 207, 0.25);
+            border-radius: 2rem;
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            transform: translateZ(5px);
+        }
+
+        .cat-fact:hover {
+            background: rgba(255, 158, 207, 0.4);
+            transform: translateY(-2px) scale(1.02);
+        }
+
+        .cat-fact i {
+            color: #ff6b9d;
+            font-size: 1rem;
+            animation: pawWave 1s infinite;
+        }
+
+        @keyframes pawWave {
+            0%, 100% { transform: rotate(0deg); }
+            50% { transform: rotate(15deg); }
+        }
+
+        .fact-text {
+            font-size: 0.75rem;
+            color: #ff6b9d;
+            font-weight: 500;
+        }
+
+        .footer {
+            margin-top: 1.5rem;
+            font-size: 0.7rem;
+            color: rgba(255, 255, 255, 0.9);
+            text-align: center;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+        }
+
+        @media (max-width: 480px) {
+            .linktree-container {
+                padding: 1rem;
+            }
+            .profile-card {
+                padding: 1.5rem;
+            }
+            .avatar {
+                width: 100px;
+                height: 100px;
+            }
+            .name {
+                font-size: 1.8rem;
+            }
+            .cat-ears {
+                gap: 55px;
+                top: -15px;
+            }
+            .ear {
+                width: 32px;
+                height: 32px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Three.js Canvas Container -->
+<div id="canvas-container"></div>
+
+<div class="linktree-container">
+    <div class="profile-card">
+        <!-- Avatar with cat ears and profile image -->
+        <div class="avatar-wrapper">
+            <div class="cat-ears">
+                <div class="ear left"></div>
+                <div class="ear right"></div>
+            </div>
+            <div class="avatar">
+                <img src="https://i.pinimg.com/1200x/69/b4/08/69b4081bcaf9714d3330ffd76b460b46.jpg" 
+                     alt="Ipara Profile Picture">
+            </div>
+        </div>
+        
+        <!-- Name -->
+        <h1 class="name">
+            <span class="cat-icon">🐱</span> Chhum pheara <span class="cat-icon">🐾</span>
+        </h1>
+        <p class="bio">✨ 3D Creator | Anime Lover | Cat Lover ✨</p>
+        <div class="location">
+            <i class="fas fa-map-marker-alt"></i>
+            <span>Siem Reap, Cambodia</span>
+            <i class="fas fa-heart" style="color: #ff6b9d;"></i>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats">
+            <div class="stat-item">
+                <div class="stat-number">50+</div>
+                <div class="stat-label">គម្រោង</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">15K+</div>
+                <div class="stat-label">អ្នកតាមដាន</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">🐱 3</div>
+                <div class="stat-label">ឆ្មាសម្លាញ់</div>
+            </div>
+        </div>
+
+        <!-- All Links (Telegram, Facebook, Instagram, TikTok, GitHub) -->
+        <div class="links">
+            <a href="https://t.me/phearachhum" target="_blank" class="link-btn" data-brand="telegram">
+                <div class="link-left">
+                    <i class="fab fa-telegram"></i>
+                    <span>✈️ Telegram</span>
+                </div>
+                <div class="link-right">
+                    <i class="fas fa-arrow-right"></i>
+                </div>
+            </a>
+
+            <a href="https://www.facebook.com/share/1CaeBqU1jE/" target="_blank" class="link-btn" data-brand="facebook">
+                <div class="link-left">
+                    <i class="fab fa-facebook-f"></i>
+                    <span>📘 Facebook</span>
+                </div>
+                <div class="link-right">
+                    <i class="fas fa-arrow-right"></i>
+                </div>
+            </a>
+
+            <a href="https://www.instagram.com/ipara561?igsh=MTkxcmx1bHUyem81cA==" target="_blank" class="link-btn" data-brand="instagram">
+                <div class="link-left">
+                    <i class="fab fa-instagram"></i>
+                    <span>📸 Instagram</span>
+                </div>
+                <div class="link-right">
+                    <i class="fas fa-arrow-right"></i>
+                </div>
+            </a>
+
+            <a href="https://www.tiktok.com/@ipaaraa?is_from_webapp=1&sender_device=pc" target="_blank" class="link-btn" data-brand="tiktok">
+                <div class="link-left">
+                    <i class="fab fa-tiktok"></i>
+                    <span>🎵 TikTok</span>
+                </div>
+                <div class="link-right">
+                    <i class="fas fa-arrow-right"></i>
+                </div>
+            </a>
+
+            <a href="https://github.com/Phearachhum" target="_blank" class="link-btn" data-brand="github">
+                <div class="link-left">
+                    <i class="fab fa-github"></i>
+                    <span>🐙 GitHub</span>
+                </div>
+                <div class="link-right">
+                    <i class="fas fa-arrow-right"></i>
+                </div>
+            </a>
+        </div>
+
+        <!-- Social Icons Row (Quick Access) -->
+        <div class="social-icons">
+            <a href="https://t.me/Phearachhum" target="_blank" class="social-icon"><i class="fab fa-telegram"></i></a>
+            <a href="https://www.facebook.com/share/1CaeBqU1jE/" target="_blank" class="social-icon"><i class="fab fa-facebook-f"></i></a>
+            <a href="https://www.instagram.com/ipara561?igsh=MTkxcmx1bHUyem81cA==" target="_blank" class="social-icon"><i class="fab fa-instagram"></i></a>
+            <a href="https://www.tiktok.com/@ipaaraa?is_from_webapp=1&sender_device=pc" target="_blank" class="social-icon"><i class="fab fa-tiktok"></i></a>
+            <a href="https://github.com/Phearachhum" target="_blank" class="social-icon"><i class="fab fa-github"></i></a>
+        </div>
+
+        <!-- Cat Fact -->
+        <div class="cat-fact" id="catFact">
+            <i class="fas fa-paw"></i>
+            <span class="fact-text" id="factText">🐱 Hello Im PHEARA </span>
+        </div>
+    </div>
+
+    <div class="footer">
+        <span>© 2023 Chhumpheara | 🐾 3D Interactive Profile 🐾</span>
+    </div>
+</div>
+
+<!-- Three.js Library -->
+<script type="importmap">
+    {
+        "imports": {
+            "three": "https://unpkg.com/three@0.128.0/build/three.module.js"
+        }
+    }
+</script>
+
+<script type="module">
+    import * as THREE from 'three';
+
+    // Setup Scene, Camera, Renderer
+    const container = document.getElementById('canvas-container');
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x0a0a2a);
+    scene.fog = new THREE.FogExp2(0x0a0a2a, 0.008);
+
+    const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(0, 2, 8);
+    camera.lookAt(0, 0, 0);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(window.devicePixelRatio);
+    container.appendChild(renderer.domElement);
+
+    // Lights
+    const ambientLight = new THREE.AmbientLight(0x404060);
+    scene.add(ambientLight);
+    
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+    directionalLight.position.set(5, 10, 7);
+    scene.add(directionalLight);
+    
+    const backLight = new THREE.PointLight(0xff6b9d, 0.5);
+    backLight.position.set(0, 2, -3);
+    scene.add(backLight);
+    
+    const fillLight = new THREE.PointLight(0x6b9dff, 0.3);
+    fillLight.position.set(3, 1, 2);
+    scene.add(fillLight);
+
+    // Create Floating Cat Head (3D)
+    const catGroup = new THREE.Group();
+    
+    // Head
+    const headGeo = new THREE.SphereGeometry(0.6, 32, 32);
+    const headMat = new THREE.MeshStandardMaterial({ color: 0xff9ecf, roughness: 0.3, metalness: 0.1, emissive: 0x331122, emissiveIntensity: 0.3 });
+    const head = new THREE.Mesh(headGeo, headMat);
+    catGroup.add(head);
+    
+    // Ears
+    const earGeo = new THREE.ConeGeometry(0.4, 0.5, 32);
+    const earMat = new THREE.MeshStandardMaterial({ color: 0xff6b9d, roughness: 0.2 });
+    const leftEar = new THREE.Mesh(earGeo, earMat);
+    leftEar.position.set(-0.45, 0.65, 0);
+    leftEar.rotation.z = -0.3;
+    const rightEar = new THREE.Mesh(earGeo, earMat);
+    rightEar.position.set(0.45, 0.65, 0);
+    rightEar.rotation.z = 0.3;
+    catGroup.add(leftEar);
+    catGroup.add(rightEar);
+    
+    // Eyes
+    const eyeGeo = new THREE.SphereGeometry(0.12, 32, 32);
+    const eyeMat = new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0x88aaff, emissiveIntensity: 0.5 });
+    const leftEye = new THREE.Mesh(eyeGeo, eyeMat);
+    leftEye.position.set(-0.22, 0.2, 0.6);
+    const rightEye = new THREE.Mesh(eyeGeo, eyeMat);
+    rightEye.position.set(0.22, 0.2, 0.6);
+    catGroup.add(leftEye);
+    catGroup.add(rightEye);
+    
+    // Pupils
+    const pupilGeo = new THREE.SphereGeometry(0.07, 32, 32);
+    const pupilMat = new THREE.MeshStandardMaterial({ color: 0x000000 });
+    const leftPupil = new THREE.Mesh(pupilGeo, pupilMat);
+    leftPupil.position.set(-0.22, 0.18, 0.72);
+    const rightPupil = new THREE.Mesh(pupilGeo, pupilMat);
+    rightPupil.position.set(0.22, 0.18, 0.72);
+    catGroup.add(leftPupil);
+    catGroup.add(rightPupil);
+    
+    // Nose
+    const noseGeo = new THREE.ConeGeometry(0.08, 0.1, 16);
+    const noseMat = new THREE.MeshStandardMaterial({ color: 0xff8888 });
+    const nose = new THREE.Mesh(noseGeo, noseMat);
+    nose.position.set(0, 0.02, 0.68);
+    nose.rotation.x = 0.2;
+    catGroup.add(nose);
+    
+    // Whiskers
+    const whiskerMat = new THREE.LineBasicMaterial({ color: 0xffaaee });
+    const whiskerPositions = [
+        [[-0.35, 0.05, 0.65], [-0.65, 0.05, 0.6]],
+        [[-0.35, -0.02, 0.65], [-0.65, -0.02, 0.6]],
+        [[0.35, 0.05, 0.65], [0.65, 0.05, 0.6]],
+        [[0.35, -0.02, 0.65], [0.65, -0.02, 0.6]]
+    ];
+    whiskerPositions.forEach(pos => {
+        const points = [];
+        points.push(new THREE.Vector3(pos[0][0], pos[0][1], pos[0][2]));
+        points.push(new THREE.Vector3(pos[1][0], pos[1][1], pos[1][2]));
+        const geometry = new THREE.BufferGeometry().setFromPoints(points);
+        const line = new THREE.Line(geometry, whiskerMat);
+        catGroup.add(line);
+    });
+    
+    catGroup.position.set(0, 0.5, 0);
+    scene.add(catGroup);
+    
+    // Floating particles (stars)
+    const particleCount = 800;
+    const particlesGeometry = new THREE.BufferGeometry();
+    const particlesPositions = new Float32Array(particleCount * 3);
+    for (let i = 0; i < particleCount; i++) {
+        particlesPositions[i * 3] = (Math.random() - 0.5) * 200;
+        particlesPositions[i * 3 + 1] = (Math.random() - 0.5) * 100;
+        particlesPositions[i * 3 + 2] = (Math.random() - 0.5) * 80 - 40;
+    }
+    particlesGeometry.setAttribute('position', new THREE.BufferAttribute(particlesPositions, 3));
+    const particlesMaterial = new THREE.PointsMaterial({ color: 0xffaacc, size: 0.12, transparent: true, opacity: 0.6 });
+    const particlesMesh = new THREE.Points(particlesGeometry, particlesMaterial);
+    scene.add(particlesMesh);
+    
+    // Floating items
+    const floatingItems = [];
+    const itemColors = [0xff6b9d, 0xff9ecf, 0xc06cff, 0xff88aa];
+    for (let i = 0; i < 50; i++) {
+        const geo = new THREE.SphereGeometry(0.05, 8, 8);
+        const mat = new THREE.MeshStandardMaterial({ color: itemColors[Math.floor(Math.random() * itemColors.length)], emissive: 0xff44aa, emissiveIntensity: 0.3 });
+        const item = new THREE.Mesh(geo, mat);
+        item.position.set((Math.random() - 0.5) * 15, (Math.random() - 0.5) * 8, (Math.random() - 0.5) * 12 - 5);
+        item.userData = { speedY: 0.005 + Math.random() * 0.01, speedX: (Math.random() - 0.5) * 0.005, originalY: item.position.y };
+        scene.add(item);
+        floatingItems.push(item);
+    }
+    
+    // Rotating rings
+    const ringGeo = new THREE.TorusGeometry(0.9, 0.03, 64, 200);
+    const ringMat = new THREE.MeshStandardMaterial({ color: 0xff6b9d, emissive: 0xff44aa, emissiveIntensity: 0.5 });
+    const ring = new THREE.Mesh(ringGeo, ringMat);
+    ring.rotation.x = Math.PI / 2;
+    catGroup.add(ring);
+    
+    const ring2Geo = new THREE.TorusGeometry(1.05, 0.02, 64, 200);
+    const ring2Mat = new THREE.MeshStandardMaterial({ color: 0xff9ecf, emissive: 0xff88cc, emissiveIntensity: 0.4 });
+    const ring2 = new THREE.Mesh(ring2Geo, ring2Mat);
+    ring2.rotation.x = Math.PI / 2 + 0.5;
+    catGroup.add(ring2);
+    
+    let time = 0;
+    let mouseX = 0, mouseY = 0;
+    let targetRotateX = 0, targetRotateY = 0;
+    const card = document.querySelector('.profile-card');
+    
+    document.addEventListener('mousemove', (e) => {
+        mouseX = (e.clientX / window.innerWidth) * 2 - 1;
+        mouseY = (e.clientY / window.innerHeight) * 2 - 1;
+        targetRotateY = mouseX * 8;
+        targetRotateX = mouseY * -5;
+    });
+    
+    function animate() {
+        requestAnimationFrame(animate);
+        time += 0.016;
+        
+        catGroup.position.y = 0.5 + Math.sin(time * 2) * 0.05;
+        catGroup.rotation.y = Math.sin(time * 0.8) * 0.2;
+        catGroup.rotation.x = Math.sin(time * 1.2) * 0.05;
+        
+        if (Math.sin(time * 3) > 0.95) {
+            leftPupil.scale.y = 0.1;
+            rightPupil.scale.y = 0.1;
+        } else {
+            leftPupil.scale.y = 1;
+            rightPupil.scale.y = 1;
+        }
+        
+        ring.rotation.z += 0.02;
+        ring2.rotation.z -= 0.015;
+        particlesMesh.rotation.y += 0.001;
+        particlesMesh.rotation.x += 0.0005;
+        
+        floatingItems.forEach(item => {
+            item.position.y += item.userData.speedY;
+            item.position.x += item.userData.speedX;
+            if (item.position.y > 4) item.position.y = -4;
+            if (item.position.x > 6) item.position.x = -6;
+            if (item.position.x < -6) item.position.x = 6;
+            item.rotation.x += 0.03;
+            item.rotation.y += 0.04;
+        });
+        
+        if (card) {
+            card.style.transform = `perspective(1000px) rotateX(${targetRotateX}deg) rotateY(${targetRotateY}deg) translateY(-5px)`;
+        }
+        
+        camera.position.x += (mouseX * 0.5 - camera.position.x) * 0.05;
+        camera.position.y += (-mouseY * 0.3 - camera.position.y) * 0.05;
+        camera.lookAt(0, 0.5, 0);
+        
+        renderer.render(scene, camera);
+    }
+    
+    animate();
+    
+    window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+    
+    // Cat facts
+    const catFacts = [
+        "🐱 Thx Q!",
+        "🐾 For !",
+        "😺 Suport!",
+        "🐱 Hello !",
+        "💕 im pheara!",
+        "🌟 Bye!"
+    ];
+    
+    let factIndex = 0;
+    const factTextEl = document.getElementById('factText');
+    const catFactDiv = document.getElementById('catFact');
+    
+    setInterval(() => {
+        factIndex = (factIndex + 1) % catFacts.length;
+        if (factTextEl) {
+            factTextEl.style.opacity = '0';
+            setTimeout(() => {
+                factTextEl.textContent = catFacts[factIndex];
+                factTextEl.style.opacity = '1';
+            }, 300);
+        }
+    }, 7000);
+    
+    if (catFactDiv) {
+        catFactDiv.addEventListener('click', () => {
+            factIndex = (factIndex + 1) % catFacts.length;
+            factTextEl.textContent = catFacts[factIndex];
+        });
+    }
+    
+    console.log('%c🐱✨ 3D Profile Active - Chhumpara ✨🐱', 'color: #ff6b9d; font-size: 16px; font-weight: bold;');
+    console.log('%cProfile image loaded from Pinterest! 📸', 'color: #c06cff; font-size: 12px;');
+</script>
+</body>
+</html>
